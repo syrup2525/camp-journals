@@ -12,6 +12,7 @@ RUN npm run build
 FROM nginx:1.27-alpine
 
 ENV API_BASE_URL=http://localhost:8080
+ENV SITE_URL=
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.d/30-generate-env.sh /docker-entrypoint.d/30-generate-env.sh

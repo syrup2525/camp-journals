@@ -1,8 +1,18 @@
 #!/bin/sh
 set -eu
 
+escape_js_string() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+escape_sed_replacement() {
+  printf '%s' "$1" | sed 's/[&|]/\\&/g'
+}
+
 api_base_url="${API_BASE_URL:-http://localhost:8080}"
-escaped_api_base_url="$(printf '%s' "$api_base_url" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+site_url="${SITE_URL:-}"
+site_url="${site_url%/}"
+escaped_api_base_url="$(escape_js_string "$api_base_url")"
 
 cat > /usr/share/nginx/html/env.js <<EOF
 window.__APP_CONFIG__ = {
@@ -10,3 +20,11 @@ window.__APP_CONFIG__ = {
 };
 EOF
 
+if [ -n "$site_url" ]; then
+  escaped_site_url="$(escape_sed_replacement "$site_url")"
+
+  sed -i \
+    -e "s|content=\"/camping-banner.png\"|content=\"$escaped_site_url/camping-banner.png\"|g" \
+    -e "s|content=\"/\"|content=\"$escaped_site_url/\"|" \
+    /usr/share/nginx/html/index.html
+fi

@@ -128,9 +128,11 @@ Frontend:
 
 ```text
 API_BASE_URL=http://localhost:8080
+SITE_URL=http://localhost:3000
 ```
 
 Frontend Docker 이미지는 컨테이너 시작 시 `API_BASE_URL` 환경 변수를 읽어 `/env.js`를 생성합니다. React 앱은 이 런타임 설정을 우선 사용합니다.
+`SITE_URL`이 설정되어 있으면 `og:url`, `og:image`, `twitter:image`를 배포 도메인 기준 절대 URL로 바꿉니다. 카카오톡 공유 미리보기에 `camping-banner.png`를 안정적으로 표시하려면 운영 Frontend 주소를 `SITE_URL`에 지정하세요.
 
 Backend:
 
@@ -159,5 +161,6 @@ AUTH_SESSION_SECRET=change-this-local-session-secret-at-least-32-chars
 - `AUTH_SESSION_SECRET`, DB 비밀번호, Redis 비밀번호는 운영 Secret으로 교체하세요.
 - HTTPS 환경에서는 `AUTH_COOKIE_SECURE=true`를 사용하세요.
 - Frontend 컨테이너의 `API_BASE_URL`은 런타임 환경 변수로 주입하세요.
+- 카카오톡 공유 이미지를 위해 Frontend 컨테이너의 `SITE_URL`은 `https://...` 형식의 운영 주소로 주입하세요.
 - 업로드 저장소는 백업과 용량 모니터링 대상입니다.
 - MySQL은 운영 백업과 권한 분리를 별도로 구성하세요.

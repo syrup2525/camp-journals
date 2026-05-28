@@ -1,8 +1,9 @@
 import { LogIn, LogOut, Plus, TentTree } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import bannerImage from '../assets/camping-banner.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './Button';
+
+const bannerImage = '/camping-banner.png';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout, user } = useAuth();
@@ -72,4 +73,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
