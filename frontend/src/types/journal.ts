@@ -21,10 +21,12 @@ export interface MediaItem {
 
 export interface Journal {
   id: Id;
+  userId: Id;
   campingDate: string;
   placeName: string;
   address: string;
   shortMemo: string;
+  isPrivate: boolean;
   createdAt: string;
   updatedAt: string;
   media: MediaItem[];
@@ -36,6 +38,7 @@ export interface JournalInput {
   placeName: string;
   address: string;
   shortMemo: string;
+  isPrivate: boolean;
   hashtags: string[];
 }
 

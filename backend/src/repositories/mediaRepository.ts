@@ -42,6 +42,11 @@ export async function findMediaById(id: Id): Promise<MediaItem | null> {
   return rows[0] ? mapMedia(rows[0]) : null;
 }
 
+export async function findMediaByFileName(fileName: string): Promise<MediaItem | null> {
+  const [rows] = await db.query<MediaRecord[]>('SELECT * FROM journal_media WHERE file_name = ? LIMIT 1', [fileName]);
+  return rows[0] ? mapMedia(rows[0]) : null;
+}
+
 export async function createMedia(input: CreateMediaInput): Promise<MediaItem> {
   const [result] = await db.execute<ResultSetHeader>(
     `INSERT INTO journal_media
@@ -62,4 +67,3 @@ export async function createMedia(input: CreateMediaInput): Promise<MediaItem> {
 export async function deleteMedia(id: Id) {
   await db.execute('DELETE FROM journal_media WHERE id = ?', [id]);
 }
-

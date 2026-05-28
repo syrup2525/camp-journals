@@ -4,6 +4,7 @@ import { upload } from '../config/upload.js';
 import { requireAuth } from '../middlewares/auth.js';
 
 export async function mediaRoutes(app: FastifyInstance) {
+  app.get('/uploads/:fileName', mediaController.serveMedia);
   app.post(
     '/api/journals/:id/media',
     {
@@ -13,4 +14,3 @@ export async function mediaRoutes(app: FastifyInstance) {
   );
   app.delete('/api/journals/:id/media/:mediaId', { preHandler: requireAuth }, mediaController.deleteMedia);
 }
-

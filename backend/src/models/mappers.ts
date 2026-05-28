@@ -17,6 +17,7 @@ export interface JournalRow {
   place_name: string;
   address: string;
   short_memo: string;
+  is_private: number | boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -64,6 +65,7 @@ export function mapJournal(row: JournalRow, media: MediaItem[], hashtags: string
     placeName: row.place_name,
     address: row.address,
     shortMemo: row.short_memo,
+    isPrivate: Boolean(row.is_private),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     media,

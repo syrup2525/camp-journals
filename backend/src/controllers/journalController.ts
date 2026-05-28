@@ -4,14 +4,14 @@ import * as journalService from '../services/journalService.js';
 import { AppError } from '../utils/errors.js';
 import { idParamSchema, journalInputSchema } from '../utils/validators.js';
 
-export async function listJournals(_request: FastifyRequest, reply: FastifyReply) {
-  const journals = await journalService.listJournals();
+export async function listJournals(request: FastifyRequest, reply: FastifyReply) {
+  const journals = await journalService.listJournals(getSessionUserId(request));
   return reply.send({ data: { journals } });
 }
 
 export async function getJournal(request: FastifyRequest, reply: FastifyReply) {
   const { id } = idParamSchema.parse(request.params);
-  const journal = await journalService.getJournal(id);
+  const journal = await journalService.getJournal(id, getSessionUserId(request));
   return reply.send({ data: { journal } });
 }
 
@@ -30,16 +30,27 @@ export async function createJournal(request: FastifyRequest, reply: FastifyReply
 
 export async function updateJournal(request: FastifyRequest, reply: FastifyReply) {
   const { id } = idParamSchema.parse(request.params);
+  const userId = getSessionUserId(request);
+
+  if (!userId) {
+    throw new AppError('로그인이 필요합니다.', 'UNAUTHORIZED', 401);
+  }
+
   const input = journalInputSchema.parse(request.body);
-  const journal = await journalService.updateJournal(id, input);
+  const journal = await journalService.updateJournal(id, userId, input);
 
   return reply.send({ data: { journal } });
 }
 
 export async function deleteJournal(request: FastifyRequest, reply: FastifyReply) {
   const { id } = idParamSchema.parse(request.params);
-  await journalService.deleteJournal(id);
+  const userId = getSessionUserId(request);
+
+  if (!userId) {
+    throw new AppError('로그인이 필요합니다.', 'UNAUTHORIZED', 401);
+  }
+
+  await journalService.deleteJournal(id, userId);
 
   return reply.send({ data: { ok: true } });
 }
-

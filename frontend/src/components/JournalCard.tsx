@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin } from 'lucide-react';
+import { CalendarDays, Lock, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HashtagList } from './HashtagList';
 import { formatDateKo } from '../utils/date';
@@ -29,6 +29,12 @@ export function JournalCard({ journal }: JournalCardProps) {
       <div className="flex min-w-0 flex-col justify-between gap-5 p-5">
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-[#647260]">
+            {journal.isPrivate ? (
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#f6ddd8] px-2 py-1 text-xs font-bold text-[#93372b]">
+                <Lock className="size-3.5" aria-hidden="true" />
+                비밀글
+              </span>
+            ) : null}
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-4" aria-hidden="true" />
               {formatDateKo(journal.campingDate)}

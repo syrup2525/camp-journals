@@ -15,11 +15,13 @@ export function JournalListPage() {
   const [journals, setJournals] = useState<Journal[]>([]);
   const [state, setState] = useState<LoadState>('loading');
   const [errorMessage, setErrorMessage] = useState('');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
+    setState('loading');
+    setErrorMessage('');
 
     getJournals()
       .then((items) => {
@@ -40,7 +42,7 @@ export function JournalListPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [user?.id]);
 
   if (state === 'loading') {
     return <StateBlock kind="loading" title="일지를 불러오는 중" />;
@@ -98,4 +100,3 @@ export function JournalListPage() {
     </div>
   );
 }
-

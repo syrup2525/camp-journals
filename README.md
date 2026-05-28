@@ -1,6 +1,6 @@
 # 캠핑 일지 웹 서비스
 
-캠핑 날짜, 장소, 주소, 메모, 해시태그, 사진, 동영상을 기록하고 공개 조회할 수 있는 풀스택 웹 서비스입니다. 열람은 누구나 가능하고, 작성/수정/삭제와 미디어 관리는 로그인한 사용자만 가능합니다.
+캠핑 날짜, 장소, 주소, 메모, 해시태그, 사진, 동영상을 기록하고 공개 조회할 수 있는 풀스택 웹 서비스입니다. 열람은 누구나 가능하고, 작성/수정/삭제와 미디어 관리는 로그인한 사용자만 가능합니다. 비밀글은 작성자 본인에게만 노출됩니다.
 
 ## 아키텍처
 
@@ -67,7 +67,8 @@ Compose 초기 실행 시 `schema.sql`이 MySQL 컨테이너에 자동 적용됩
 mysql -h localhost -P 3306 -u camp_user_id -p camp_db_name < schema.sql
 ```
 
-스키마에는 `users`, `journals`, `journal_media`, `journal_hashtags` 테이블이 포함됩니다.
+스키마에는 `users`, `journals`, `journal_media`, `journal_hashtags` 테이블이 포함됩니다. `journals.is_private`가 `1`인 비밀글은 작성자 본인에게만 목록/상세/미디어가 노출됩니다.
+이미 생성된 DB에는 `CREATE TABLE IF NOT EXISTS`가 기존 테이블 구조를 바꾸지 않으므로, 기존 데이터를 유지한 채 배포할 때는 백업 후 운영 절차에 맞게 `journals.is_private` 컬럼과 `idx_journals_visibility` 인덱스를 반영하세요.
 
 ## 기본 테스트 계정 생성
 
@@ -100,7 +101,7 @@ docker compose exec backend node dist/scripts/createUser.js admin camp1234 "캠�
 - `DELETE /api/journals/:id/media/:mediaId`
 - `GET /uploads/:fileName`
 
-일지 생성/수정 요청에는 `hashtags: string[]`를 포함할 수 있습니다. 응답의 일지 객체에도 `hashtags` 배열이 포함되며, 목록 화면에서 표시됩니다.
+일지 생성/수정 요청에는 `hashtags: string[]`, `isPrivate: boolean`을 포함할 수 있습니다. 응답의 일지 객체에도 `hashtags`, `isPrivate`가 포함되며, 목록 화면에서 표시됩니다.
 
 에러 응답은 `{ "message": "...", "code": "..." }` 형식입니다.
 

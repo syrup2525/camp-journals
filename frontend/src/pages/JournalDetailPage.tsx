@@ -1,4 +1,4 @@
-import { CalendarDays, Edit3, MapPin, Trash2 } from 'lucide-react';
+import { CalendarDays, Edit3, Lock, MapPin, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/Button';
@@ -16,7 +16,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 export function JournalDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [journal, setJournal] = useState<Journal | null>(null);
   const [state, setState] = useState<LoadState>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -53,6 +53,7 @@ export function JournalDetailPage() {
 
   const photos = useMemo(() => journal?.media.filter(isImage) ?? [], [journal]);
   const videos = useMemo(() => journal?.media.filter(isVideo) ?? [], [journal]);
+  const isOwner = Boolean(journal && user && String(journal.userId) === String(user.id));
 
   const handleDelete = async () => {
     if (!journal) {
@@ -81,6 +82,12 @@ export function JournalDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3 text-sm text-[#687267]">
+            {journal.isPrivate ? (
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#f6ddd8] px-2 py-1 text-xs font-bold text-[#93372b]">
+                <Lock className="size-3.5" aria-hidden="true" />
+                비밀글
+              </span>
+            ) : null}
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-4" aria-hidden="true" />
               {formatDateKo(journal.campingDate)}
@@ -97,7 +104,7 @@ export function JournalDetailPage() {
             </div>
           ) : null}
         </div>
-        {isAuthenticated ? (
+        {isOwner ? (
           <div className="flex gap-2">
             <Button icon={<Edit3 className="size-4" aria-hidden="true" />} onClick={() => navigate(`/journals/${journal.id}/edit`)} variant="secondary">
               수정

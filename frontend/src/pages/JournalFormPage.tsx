@@ -1,10 +1,11 @@
-import { Hash, ImagePlus, Save, Trash2, Video } from 'lucide-react';
+import { Hash, ImagePlus, Lock, Save, Trash2, Unlock, Video } from 'lucide-react';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { HashtagList } from '../components/HashtagList';
 import { MediaPreviewGrid } from '../components/MediaPreviewGrid';
 import { StateBlock } from '../components/StateBlock';
+import { useAuth } from '../contexts/AuthContext';
 import { useObjectUrls } from '../hooks/useObjectUrls';
 import {
   createJournal,
@@ -27,12 +28,14 @@ const emptyForm: JournalInput = {
   placeName: '',
   address: '',
   shortMemo: '',
+  isPrivate: false,
   hashtags: [],
 };
 
 export function JournalFormPage({ mode }: JournalFormPageProps) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState<JournalInput>(emptyForm);
   const [hashtagText, setHashtagText] = useState('');
   const [journal, setJournal] = useState<Journal | null>(null);
@@ -53,18 +56,26 @@ export function JournalFormPage({ mode }: JournalFormPageProps) {
 
     let mounted = true;
     setIsLoading(true);
+    setErrorMessage('');
 
     getJournal(id)
       .then((item) => {
         if (!mounted) {
           return;
         }
+
+        if (String(item.userId) !== String(user?.id)) {
+          setErrorMessage('일지를 수정할 권한이 없습니다.');
+          return;
+        }
+
         setJournal(item);
         setForm({
           campingDate: toDateInputValue(item.campingDate),
           placeName: item.placeName,
           address: item.address,
           shortMemo: item.shortMemo,
+          isPrivate: item.isPrivate,
           hashtags: item.hashtags,
         });
         setHashtagText(formatHashtags(item.hashtags));
@@ -84,7 +95,7 @@ export function JournalFormPage({ mode }: JournalFormPageProps) {
     return () => {
       mounted = false;
     };
-  }, [id, mode]);
+  }, [id, mode, user?.id]);
 
   const visibleMedia = useMemo(
     () => journal?.media.filter((media) => !removedMediaIds.includes(media.id)) ?? [],
@@ -94,7 +105,7 @@ export function JournalFormPage({ mode }: JournalFormPageProps) {
   const existingPhotos = visibleMedia.filter(isImage);
   const existingVideos = visibleMedia.filter(isVideo);
 
-  const updateField = (field: keyof JournalInput, value: string) => {
+  const updateField = <K extends keyof JournalInput>(field: K, value: JournalInput[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
@@ -234,6 +245,25 @@ export function JournalFormPage({ mode }: JournalFormPageProps) {
             <HashtagList compact hashtags={parseHashtagText(hashtagText)} />
           </div>
         ) : null}
+        <label className="flex min-h-14 cursor-pointer items-center justify-between gap-4 rounded-md border border-[#cfc7b6] bg-[#fbfaf6] px-4 py-3 text-sm font-bold text-[#354238] sm:col-span-2">
+          <span className="inline-flex min-w-0 items-center gap-2">
+            {form.isPrivate ? (
+              <Lock className="size-4 shrink-0 text-[#93372b]" aria-hidden="true" />
+            ) : (
+              <Unlock className="size-4 shrink-0 text-[#687267]" aria-hidden="true" />
+            )}
+            <span>비밀글</span>
+          </span>
+          <span className="inline-flex items-center gap-3 text-xs font-semibold text-[#687267]">
+            <span>{form.isPrivate ? '작성자만 볼 수 있음' : '전체 공개'}</span>
+            <input
+              checked={form.isPrivate}
+              className="focus-ring size-5 accent-[#31533b]"
+              onChange={(event) => updateField('isPrivate', event.target.checked)}
+              type="checkbox"
+            />
+          </span>
+        </label>
       </section>
 
       {mode === 'edit' ? (

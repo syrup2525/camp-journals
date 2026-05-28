@@ -7,10 +7,19 @@ import type { Id, Journal, JournalInput } from '../types/domain.js';
 
 type JournalRecord = JournalRow & RowDataPacket;
 
-export async function findAllJournals(): Promise<Journal[]> {
-  const [rows] = await db.query<JournalRecord[]>(
-    'SELECT * FROM journals ORDER BY camping_date DESC, created_at DESC, id DESC',
-  );
+export async function findVisibleJournals(viewerUserId?: Id): Promise<Journal[]> {
+  const [rows] = viewerUserId
+    ? await db.query<JournalRecord[]>(
+        `SELECT * FROM journals
+         WHERE is_private = 0 OR user_id = ?
+         ORDER BY camping_date DESC, created_at DESC, id DESC`,
+        [viewerUserId],
+      )
+    : await db.query<JournalRecord[]>(
+        `SELECT * FROM journals
+         WHERE is_private = 0
+         ORDER BY camping_date DESC, created_at DESC, id DESC`,
+      );
   const journalIds = rows.map((row) => row.id);
   const [mediaByJournal, hashtagsByJournal] = await Promise.all([
     findMediaByJournalIds(journalIds),
@@ -18,6 +27,28 @@ export async function findAllJournals(): Promise<Journal[]> {
   ]);
 
   return rows.map((row) => mapJournal(row, mediaByJournal.get(row.id) ?? [], hashtagsByJournal.get(row.id) ?? []));
+}
+
+export async function findVisibleJournalById(id: Id, viewerUserId?: Id): Promise<Journal | null> {
+  const [rows] = viewerUserId
+    ? await db.query<JournalRecord[]>(
+        `SELECT * FROM journals
+         WHERE id = ? AND (is_private = 0 OR user_id = ?)
+         LIMIT 1`,
+        [id, viewerUserId],
+      )
+    : await db.query<JournalRecord[]>('SELECT * FROM journals WHERE id = ? AND is_private = 0 LIMIT 1', [id]);
+  const row = rows[0];
+
+  if (!row) {
+    return null;
+  }
+
+  const [mediaByJournal, hashtagsByJournal] = await Promise.all([
+    findMediaByJournalIds([row.id]),
+    findHashtagsByJournalIds([row.id]),
+  ]);
+  return mapJournal(row, mediaByJournal.get(row.id) ?? [], hashtagsByJournal.get(row.id) ?? []);
 }
 
 export async function findJournalById(id: Id): Promise<Journal | null> {
@@ -37,9 +68,9 @@ export async function findJournalById(id: Id): Promise<Journal | null> {
 
 export async function createJournal(userId: Id, input: JournalInput): Promise<Journal> {
   const [result] = await db.execute<ResultSetHeader>(
-    `INSERT INTO journals (user_id, camping_date, place_name, address, short_memo)
-     VALUES (?, ?, ?, ?, ?)`,
-    [userId, input.campingDate, input.placeName, input.address, input.shortMemo],
+    `INSERT INTO journals (user_id, camping_date, place_name, address, short_memo, is_private)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [userId, input.campingDate, input.placeName, input.address, input.shortMemo, input.isPrivate ? 1 : 0],
   );
   await replaceJournalHashtags(result.insertId, input.hashtags);
 
@@ -55,9 +86,9 @@ export async function createJournal(userId: Id, input: JournalInput): Promise<Jo
 export async function updateJournal(id: Id, input: JournalInput): Promise<Journal | null> {
   await db.execute(
     `UPDATE journals
-     SET camping_date = ?, place_name = ?, address = ?, short_memo = ?
+     SET camping_date = ?, place_name = ?, address = ?, short_memo = ?, is_private = ?
      WHERE id = ?`,
-    [input.campingDate, input.placeName, input.address, input.shortMemo, id],
+    [input.campingDate, input.placeName, input.address, input.shortMemo, input.isPrivate ? 1 : 0, id],
   );
   await replaceJournalHashtags(id, input.hashtags);
 

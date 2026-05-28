@@ -8,12 +8,17 @@ import { AppError } from '../utils/errors.js';
 import { removeFileIfExists, resolveUploadPath } from '../utils/fileSystem.js';
 import { mediaTypeFromMime, validateUploadSize } from '../utils/mediaPolicy.js';
 
-export async function addMediaToJournal(journalId: Id, files: MulterFile[]) {
+export async function addMediaToJournal(journalId: Id, userId: Id, files: MulterFile[]) {
   const journal = await journalRepository.findJournalById(journalId);
 
   if (!journal) {
     await Promise.all(files.map((file) => removeFileIfExists(file.path)));
     throw new AppError('캠핑 일지를 찾을 수 없습니다.', 'JOURNAL_NOT_FOUND', 404);
+  }
+
+  if (journal.userId !== userId) {
+    await Promise.all(files.map((file) => removeFileIfExists(file.path)));
+    throw new AppError('일지를 수정할 권한이 없습니다.', 'FORBIDDEN', 403);
   }
 
   const created = [];
@@ -52,13 +57,49 @@ export async function addMediaToJournal(journalId: Id, files: MulterFile[]) {
   return created;
 }
 
-export async function deleteJournalMedia(journalId: Id, mediaId: Id) {
+export async function deleteJournalMedia(journalId: Id, mediaId: Id, userId: Id) {
   const media = await mediaRepository.findMediaById(mediaId);
 
   if (!media || media.journalId !== journalId) {
     throw new AppError('미디어 파일을 찾을 수 없습니다.', 'MEDIA_NOT_FOUND', 404);
   }
 
+  const journal = await journalRepository.findJournalById(journalId);
+
+  if (!journal) {
+    throw new AppError('캠핑 일지를 찾을 수 없습니다.', 'JOURNAL_NOT_FOUND', 404);
+  }
+
+  if (journal.userId !== userId) {
+    throw new AppError('일지를 수정할 권한이 없습니다.', 'FORBIDDEN', 403);
+  }
+
   await mediaRepository.deleteMedia(mediaId);
   await removeFileIfExists(resolveUploadPath(env.UPLOAD_DIR, media.fileName));
+}
+
+export async function getReadableMedia(fileName: string, viewerUserId?: Id) {
+  const safeFileName = path.basename(fileName);
+
+  if (safeFileName !== fileName) {
+    throw new AppError('미디어 파일을 찾을 수 없습니다.', 'MEDIA_NOT_FOUND', 404);
+  }
+
+  const media = await mediaRepository.findMediaByFileName(safeFileName);
+
+  if (!media) {
+    throw new AppError('미디어 파일을 찾을 수 없습니다.', 'MEDIA_NOT_FOUND', 404);
+  }
+
+  const journal = await journalRepository.findJournalById(media.journalId);
+
+  if (!journal || (journal.isPrivate && journal.userId !== viewerUserId)) {
+    throw new AppError('미디어 파일을 찾을 수 없습니다.', 'MEDIA_NOT_FOUND', 404);
+  }
+
+  return {
+    media,
+    filePath: resolveUploadPath(env.UPLOAD_DIR, media.fileName),
+    isPrivate: journal.isPrivate,
+  };
 }

@@ -1,9 +1,7 @@
-import path from 'node:path';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import session from '@fastify/session';
-import fastifyStatic from '@fastify/static';
 import { env, corsOrigins } from './config/env.js';
 import { connectRedis, redis } from './config/redis.js';
 import { RedisSessionStore } from './config/sessionStore.js';
@@ -34,7 +32,8 @@ export async function buildApp() {
 
   await app.register(cors, {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
+    exposedHeaders: ['Accept-Ranges', 'Content-Length', 'Content-Range'],
     origin: (origin, callback) => {
       if (!origin || corsOrigins.includes(origin)) {
         callback(null, true);
@@ -62,12 +61,6 @@ export async function buildApp() {
     },
   });
 
-  await app.register(fastifyStatic, {
-    root: path.resolve(env.UPLOAD_DIR),
-    prefix: '/uploads/',
-    decorateReply: false,
-    index: false,
-  });
   app.addContentTypeParser(/^multipart\/form-data(?:;.*)?$/i, (_request, _payload, done) => {
     done(null);
   });

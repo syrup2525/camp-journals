@@ -21,6 +21,22 @@ function normalizeMediaKind(raw: Record<string, unknown>): MediaKind {
   return 'image';
 }
 
+function normalizeBoolean(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string') {
+    return ['1', 'true', 'yes', 'y'].includes(value.trim().toLowerCase());
+  }
+
+  return false;
+}
+
 export function normalizeMedia(rawMedia: unknown): MediaItem {
   const raw = rawMedia as Record<string, unknown>;
 
@@ -50,10 +66,12 @@ export function normalizeJournal(rawJournal: unknown): Journal {
 
   return {
     id: valueFrom<Id>(raw, ['id', 'journalId', 'journal_id'], ''),
+    userId: valueFrom<Id>(raw, ['userId', 'user_id', 'authorId', 'author_id'], ''),
     campingDate: valueFrom<string>(raw, ['campingDate', 'camping_date', 'date'], ''),
     placeName: valueFrom<string>(raw, ['placeName', 'place_name', 'locationName', 'location_name'], ''),
     address: valueFrom<string>(raw, ['address', 'shortAddress', 'short_address'], ''),
     shortMemo: valueFrom<string>(raw, ['shortMemo', 'short_memo', 'memo', 'review', 'content'], ''),
+    isPrivate: normalizeBoolean(valueFrom(raw, ['isPrivate', 'is_private', 'private'], false)),
     createdAt: valueFrom<string>(raw, ['createdAt', 'created_at'], ''),
     updatedAt: valueFrom<string>(raw, ['updatedAt', 'updated_at'], ''),
     media,

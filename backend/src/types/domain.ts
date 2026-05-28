@@ -15,6 +15,7 @@ export interface JournalInput {
   placeName: string;
   address: string;
   shortMemo: string;
+  isPrivate: boolean;
   hashtags: string[];
 }
 
@@ -37,6 +38,7 @@ export interface Journal {
   placeName: string;
   address: string;
   shortMemo: string;
+  isPrivate: boolean;
   createdAt: Date;
   updatedAt: Date;
   media: MediaItem[];
