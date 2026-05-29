@@ -16,10 +16,10 @@ export function JournalCard({ journal }: JournalCardProps) {
 
   return (
     <Link
-      className="focus-ring group grid overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-[#ded6c6] transition hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[260px_1fr]"
+      className="focus-ring group grid overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-[#ded6c6] transition hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[260px_minmax(0,1fr)]"
       to={`/journals/${journal.id}`}
     >
-      <div className="aspect-[16/10] bg-[#dfe7dc] md:aspect-auto">
+      <div className="aspect-[16/10] overflow-hidden bg-[#dfe7dc] md:h-[220px] md:aspect-auto">
         {coverUrl ? (
           <img className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" src={coverUrl} alt="" />
         ) : (
